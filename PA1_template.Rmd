@@ -9,7 +9,7 @@ output:
 
 ```{r}
 library(ggplot2, quietly = TRUE, verbose = FALSE)
-library(dplyr, quietly = TRUE, verbose = FALSE)
+library(dplyr, quietly = TRUE, verbose = FALSE, warn.conflicts = FALSE)
 library(chron, quietly = TRUE, verbose = FALSE)
 dsClasses <- c("numeric", "character", "numeric")
 ds <- read.csv("activity.csv", header = TRUE, colClasses = dsClasses, na.strings=c("","NA"))
@@ -21,31 +21,32 @@ ds$date <- as.Date(ds$date, format="%Y-%m-%d")
 Below, you can see the histogram of the mean and median of the total number of steps taken per day.
 
 ```{r}
-totalStepsByDate = summarise(group_by(ds, date), totalSteps = sum(steps, na.rm = TRUE))
-qplot(totalStepsByDate$totalSteps, geom="histogram")
+totalStepsByDate = summarise(group_by(ds, date), totalSteps = sum(steps))
+qplot(totalStepsByDate$totalSteps, geom="histogram") + xlab("Steps") + ggtitle("Total Steps By Day")
 ```
 
-## Mean total number of steps taken per day?
+## Total mean number of steps taken per day
 
 The mean is `r as.character(mean(totalStepsByDate$totalSteps, na.rm = TRUE))`
 
 The average is `r as.character(median(totalStepsByDate$totalSteps, na.rm = TRUE))`
 
-## Average daily activity pattern?
+## The average daily activity pattern
 
 This is a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
 ```{r}
 averageStepsByInterval = summarise(group_by(ds, interval), averageSteps = mean(steps, na.rm = TRUE))
-ggplot(averageStepsByInterval, aes(interval, averageSteps)) + geom_line() + xlab("Interval") + ylab("Daily Views")
+ggplot(averageStepsByInterval, aes(interval, averageSteps)) + geom_line() + xlab("Interval") + ylab("Average Steps") + ggtitle("Average Steps by Interval")
 ```
 
 The maximum number of steps (5-minute interval, on average across all the days in the dataset) is `r as.character(filter(averageStepsByInterval, averageSteps == max(averageStepsByInterval$averageSteps)))`
-```
 
 ## Imputing missing values
 
-Total number of missing values in the dataset is `r as.character(ds$steps[is.na(ds$steps) == TRUE] <- 0)`
+Total number of missing values in the dataset is `r length(ds$steps[is.na(ds$steps) == TRUE])`
+
+You can see that NA values effectively change the results. Compare to analysis below.
 
 ```{r}
 ds$steps[is.na(ds$steps) == TRUE] <- 0
@@ -55,8 +56,8 @@ Below is a histogram of the total number of steps taken each day and Calculate a
 
 ```{r}
 
-totalStepsByDate = summarise(group_by(ds, date), totalSteps = sum(steps, na.rm = FALSE))
-qplot(totalStepsByDate$totalSteps, geom="histogram")
+totalStepsByDate = summarise(group_by(ds, date), totalSteps = sum(steps))
+qplot(totalStepsByDate$totalSteps, geom="histogram") + xlab("Steps") + ggtitle("Total Steps By Day")
 
 ```
 
@@ -69,8 +70,8 @@ The average is `r as.character(median(totalStepsByDate$totalSteps, na.rm = TRUE)
 ```{r}
 daysOfWeek <- is.weekend(ds$date)
 ds$isWeekend <- factor(daysOfWeek, labels = c("Weekday", "Weekend"))
-averageStepsByInterval = summarise(group_by(ds, interval, isWeekend), averageSteps = mean(steps, na.rm = TRUE))
+averageStepsByInterval = summarise(group_by(ds, interval, isWeekend), averageSteps = mean(steps))
 
-g <- ggplot(averageStepsByInterval, aes(interval, averageSteps)) + geom_line() + xlab("Interval") + ylab("Average Steps")
+g <- ggplot(averageStepsByInterval, aes(interval, averageSteps)) + geom_line() + xlab("Interval") + ylab("Average Steps") + ggtitle("Average Steps by Interval")
 g + facet_grid(isWeekend ~ .)
 ```
